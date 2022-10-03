@@ -2,7 +2,7 @@
 /*
  * Plugin Name: eventplugin
  * Description:  собственно плагин, первый, кривой-косой, но плагин для WP; нужен для работы с событиями;
- *  и я пока ума не приложу, как и что он будет делать :-)
+ * и я пока ума не приложу, как и что он будет делать :-)
  * Version: 0.1
  * Author: TechnoPreacher
  * License: GPLv2 or later
@@ -10,37 +10,21 @@
  * Requires PHP: 8.0
 */
 
-
-
-
 register_activation_hook( __FILE__, 'eventplugin_install' );
+
 function eventplugin_install(){
-    // Запускаем функцию регистрации типа записи
-//    eventplugin_setup_post_types();
-   // Сбрасываем настройки ЧПУ, чтобы они пересоздались с новыми данными
-  //  flush_rewrite_rules();
+   
 }
-
-
-
-
-
-//global $myvar; // указываем явно что это глобальная переменная
-//$myvar = 'что-то';
-
-//register_activation_hook(__FILE__, 'eventplugin_activate');
 
 register_deactivation_hook( __FILE__, 'eventplugin_deactivate' );
 
 function eventplugin_deactivate()
-{ //echo('2');
-   unregister_post_type( 'events' );
-  //  echo('2');
+{ 
+	unregister_post_type( 'events' );
 }
 
 function eventplugin_activate()
 {
-
     $labels = array(
         'name' => 'Events',
         'singular_name' => 'Events',
@@ -76,11 +60,15 @@ function eventplugin_activate()
         'rewrite' => array('slug' => 'events'),
         'query_var' => true
     );
-    register_post_type('events', $args);
+    
+	register_post_type('events', $args);
+	
+	// Сбрасываем настройки ЧПУ, чтобы они пересоздались с новыми данными
+	flush_rewrite_rules();
 }
 
-// Hooking up our function to theme setup
-add_action( 'init', 'eventplugin_activate' );
+
+add_action( 'init', 'eventplugin_activate' );//инициализация
 
 
 /*
