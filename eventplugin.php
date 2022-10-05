@@ -88,7 +88,7 @@ function eventplugin_activate()
     flush_rewrite_rules();
 }
 
-register_activation_hook(__FILE__, 'eventplugin_install');
+//register_activation_hook(__FILE__, 'eventplugin_install');
 register_deactivation_hook(__FILE__, 'eventplugin_deactivate');
 
 
@@ -98,11 +98,11 @@ add_action('init', 'create_taxonomies');//таксономия
 add_action('init', 'eventplugin_activate');//инициализация кастомных контент тайпов
 
 
-function eventplugin_install()
+/*function eventplugin_install()
 {
     //тут делаю что-то полезное
 
-}
+}*/
 
 
 function eventplugin_deactivate()
@@ -110,7 +110,10 @@ function eventplugin_deactivate()
     unregister_post_type('events');
     //и надо чистить БД от данных виджета
     unregister_widget('event_widget');
-
+   // add_action( 'init', 'unregister_shortcodes', 20 );
+    //function unregister_shortcodes(){
+        remove_shortcode( 'events' );
+    //}
 }
 
 
@@ -244,6 +247,10 @@ add_action('admin_print_footer_scripts-edit.php', function () {
 });
 
 
+
+
+
+
 class event_widget extends WP_Widget
 {
 
@@ -259,6 +266,8 @@ class event_widget extends WP_Widget
     public function widget($args, $instance)//внешний вид для вывода на фронт!
     {
         ?>
+
+
         <div style="width:200px;height:150px;border:5px solid lime;"> <?php
             $numberofevents = $instance['numberofevents'];//считал значение числа событий, введённое в админке в виджет
             $typeofevents = $instance['typeofevents'];//ну и вид события оттуда же
@@ -276,11 +285,14 @@ class event_widget extends WP_Widget
          //   var_dump($args);
 
        // $args = array( 'post_type' => 'events' );//, 'posts_per_page' => -1
+            $dateNow = date_create('now');
+            $dateNow = date_format($dateNow, "Y-m-d");
+            echo($dateNow.'***'.$dateNow); echo('<br><br>');
 
             $args2 =   array(
                 'post_type' => 'events',
-             //   'meta_key' => 'eventdate',
-               // 'meta_key' => 'status',
+
+
                 'meta_query' => array(
                     array(
                         'key' => 'status',
@@ -288,7 +300,7 @@ class event_widget extends WP_Widget
                     ),
                     array(
                         'key' => 'eventdate',
-                        'value' => '2022-01-01',
+                        'value' => $dateNow,
                         'compare' => '>=',
                         'type' => 'DATE',
                     ),
@@ -313,7 +325,7 @@ class event_widget extends WP_Widget
        endwhile;
 
             wp_reset_postdata();
-           // echo __('echoed text from plugin', 'event_widget_domain');
+
             echo $args['after_widget'];
             ?>
         </div>
@@ -401,3 +413,98 @@ function event_register_widget()
 }
 
 add_action('widgets_init', 'event_register_widget');
+
+
+
+
+
+add_shortcode( 'events', 'event_shortcode' );
+
+function event_shortcode( $atts ){
+
+    $atts = shortcode_atts( [
+        'numbers' => '0', 'status'  => 'open',
+    ], $atts );
+
+
+
+    $dateNow = date_create('now');
+    $dateNow = date_format($dateNow, "Y-m-d");
+$num = $atts['numbers'];
+$st = $atts["status"];
+
+    $args2 =   array(
+        'post_type' => 'events',
+        'posts_per_page' => $num,
+
+        'meta_key' => 'eventdate',
+
+        'meta_query' => array(
+            array(
+                'key' => 'status',
+                'value' => $st,//ищу  события по статусу
+            ),
+            'eventdate_clause'=>   array(
+                'key' => 'eventdate',
+                'value' => $dateNow,
+                'compare' => '>=',
+                'type' => 'DATE',
+            ),
+        ),
+
+       // 'orderby' => 'eventdate_clause',
+
+
+        'orderby' => array(
+            'eventdate_clause' => 'ASC',
+        ),
+
+    );
+
+    $loop = new WP_Query( $args2 );
+   $numberOfPosts =  $loop->post_count;
+    $heightByPosts = (50+$numberOfPosts*50).'px';//для высоты прамки!
+
+
+$htmlLoopOutput = ""; //тут html для
+    while ( $loop->have_posts() ) : $loop->the_post();
+       $t =  the_title('','',false);
+       $d = (get_post_custom_values('eventdate')[0]);
+        $htmlLoopOutput .= "<li> $t $d</li> <br> ";
+
+
+    endwhile;
+    wp_reset_postdata();
+
+    return " 
+ <div style=\"width:90%;height:$heightByPosts;border:5px solid blue;\"> 
+ <p>
+  ВСЕГО $num событий $st типа с датой позже $dateNow размером $heightByPosts
+  </p>
+<p>
+$htmlLoopOutput
+</p>
+ </div>
+ ";
+
+
+
+
+
+
+
+
+
+        wp_reset_postdata();
+
+        echo $args['after_widget'];
+        ?>
+    </div>
+    <?php
+
+
+
+
+
+
+}
