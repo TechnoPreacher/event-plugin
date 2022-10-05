@@ -1,8 +1,7 @@
 <?php
 /*
- * Plugin Name: eventplugin
- * Description:  собственно плагин, первый, кривой-косой, но плагин для WP; нужен для работы с событиями;
- * и я пока ума не приложу, как и что он будет делать :-)
+ * Plugin Name: Событийный плагин :-)
+ * Description:  Позволяет создавать виджет с предстоящими событиями; события могут содержать таксономии; имеется шорткод
  * Version: 0.1
  * Author: TechnoPreacher
  * License: GPLv2 or later
@@ -10,22 +9,20 @@
  * Requires PHP: 8.0
 */
 
-function create_taxonomies()
+function create_taxonomies()//таксономия
 {
-
-    // Add a taxonomy like categories
     $labels = array(
-        'name' => 'Types',
+        'name' => 'Таксономия ивента',
         'singular_name' => 'Type',
         'search_items' => 'Search Types',
         'all_items' => 'All Types',
-        'parent_item' => 'Parent Type',
+        'parent_item' => 'Родитель',
         'parent_item_colon' => 'Parent Type:',
-        'edit_item' => 'Edit Type',
-        'update_item' => 'Update Type',
-        'add_new_item' => 'Add New Type',
-        'new_item_name' => 'New Type Name',
-        'menu_name' => 'Types',
+        'edit_item' => 'Редактировать таксономию ;-)',
+        'update_item' => 'Обновить таксономию ;-)',
+        'add_new_item' => 'Добавить новую таксономию ;-)',
+        'new_item_name' => 'Новая таксономия ;-)',
+        'menu_name' => 'Таксономия ;-)',
     );
 
     $args = array(
@@ -43,20 +40,20 @@ function create_taxonomies()
 function eventplugin_activate()
 {
     $labels = array(
-        'name' => 'Events',
-        'singular_name' => 'Events',
-        'menu_name' => 'Events',
+        'name' => 'События :-)',
+        'singular_name' => 'События :-)',
+        'menu_name' => 'События :-)',
         'name_admin_bar' => 'Event',
-        'add_new' => 'Add New',
-        'add_new_item' => 'Add New Event',
-        'new_item' => 'New Event',
-        'edit_item' => 'Edit Event',
+        'add_new' => 'Добавить событие :-)',
+        'add_new_item' => 'Добавить событие :-)',
+        'new_item' => 'Новое событие :-)',
+        'edit_item' => 'Редактировать событие :-)',
         'view_item' => 'View Event',
-        'all_items' => 'All Events',
+        'all_items' => 'Все события :-)',
         'search_items' => 'Search Events',
         'parent_item_colon' => 'Parent Events',
-        'not_found' => 'No Events Found',
-        'not_found_in_trash' => 'No Events Found in Trash'
+        'not_found' => 'Пока что событий нет :-(',
+        'not_found_in_trash' => 'Корзина пуста!'
     );
 
     $args = array(
@@ -72,10 +69,7 @@ function eventplugin_activate()
         'menu_icon' => 'dashicons-admin-appearance',
         'capability_type' => 'post',
         'hierarchical' => false,
-        'supports' => array('title', 'status', 'eventdate'),
-
-        //'custom-fields',	, 'custom-fields','editor', 'author', 'thumbnail', 'excerpt', 'comments'
-
+        'supports' => array('title', 'status', 'eventdate'),//, 'editor'
         'has_archive' => true,
         'rewrite' => array('slug' => 'events'),
         'query_var' => true
@@ -110,12 +104,11 @@ function eventplugin_deactivate()
     unregister_post_type('events');
     //и надо чистить БД от данных виджета
     unregister_widget('event_widget');
-   // add_action( 'init', 'unregister_shortcodes', 20 );
+    // add_action( 'init', 'unregister_shortcodes', 20 );
     //function unregister_shortcodes(){
-        remove_shortcode( 'events' );
+    remove_shortcode('events');
     //}
 }
-
 
 
 /*
@@ -133,7 +126,7 @@ function post_tag_for_pages(){
 
 function my_extra_fields()
 {
-    add_meta_box('extra_fields', 'Новые поля', 'extra_fields_box_func', 'events', 'normal', 'high');
+    add_meta_box('extra_fields', 'Поля ивента', 'extra_fields_box_func', 'events', 'normal', 'high');
 }
 
 
@@ -142,17 +135,16 @@ function extra_fields_box_func($post)
 {
     ?>
 
-    <p>Статус: <?php $mark_v = get_post_meta($post->ID, 'status', 1); ?>
+    <p>Статус ивента: <?php $mark_v = get_post_meta($post->ID, 'status', 1); ?>
 
         <label><input type="radio" name="extra[status]" value="open" <?php checked($mark_v, 'open'); ?> /> open</label>
-        <label><input type="radio" name="extra[status]" value="closed" <?php checked($mark_v, 'closed'); ?> />
-            closed</label>
+        <label><input type="radio" name="extra[status]" value="closed" <?php checked($mark_v, 'closed'); ?> />closed</label>
 
     </p>
 
     <p>
-        Дата: <?php $eventDate = get_post_meta($post->ID, 'eventdate', 1); ?>
-        <input type='date' name="extra[eventdate]" value=<?= $eventDate ?>/>
+        Дата ивента: <?php $eventDate = get_post_meta($post->ID, 'eventdate', 1);?>
+        <input type='date' name="extra[eventdate]" value="<?=$eventDate ?>"/>
     </p>
 
 
@@ -247,10 +239,6 @@ add_action('admin_print_footer_scripts-edit.php', function () {
 });
 
 
-
-
-
-
 class event_widget extends WP_Widget
 {
 
@@ -273,23 +261,25 @@ class event_widget extends WP_Widget
             $typeofevents = $instance['typeofevents'];//ну и вид события оттуда же
 
             //  $numberofevents= apply_filters('widget_numberofevents', $instance['numberofevents']);
-           // $typeofevents = apply_filters('widget_typeofevents', $instance['typeofevents']);
+            // $typeofevents = apply_filters('widget_typeofevents', $instance['typeofevents']);
 
             echo $args['before_widget'];
             //if title is present
-           // if (!empty($eventdate))
-            echo $args['before_title'] . "СОБЫТИЯ".$args['after_title'];
+            // if (!empty($eventdate))
+            echo $args['before_title'] . "СОБЫТИЯ" . $args['after_title'];
             //output
-           // var_dump($instance);
-            echo($numberofevents.'***'.$typeofevents); echo('<br><br>');
-         //   var_dump($args);
+            // var_dump($instance);
+            echo($numberofevents . '***' . $typeofevents);
+            echo('<br><br>');
+            //   var_dump($args);
 
-       // $args = array( 'post_type' => 'events' );//, 'posts_per_page' => -1
+            // $args = array( 'post_type' => 'events' );//, 'posts_per_page' => -1
             $dateNow = date_create('now');
             $dateNow = date_format($dateNow, "Y-m-d");
-            echo($dateNow.'***'.$dateNow); echo('<br><br>');
+            echo($dateNow . '***' . $dateNow);
+            echo('<br><br>');
 
-            $args2 =   array(
+            $args2 = array(
                 'post_type' => 'events',
 
 
@@ -307,22 +297,23 @@ class event_widget extends WP_Widget
                 ),
             );
 
-        $loop = new WP_Query( $args2 );
+            $loop = new WP_Query($args2);
 
 
+            while ($loop->have_posts()) : $loop->the_post();
 
 
-        while ( $loop->have_posts() ) : $loop->the_post();
-
-
-            ?>
-            <li><?php the_title(); echo "  "; echo (get_post_custom_values('status')[0]);
-                echo "  "; echo (get_post_custom_values('eventdate')[0]);
-            ?></li>
-            <?php
-        // echo esc_attr($loop->post->post_title);
-        echo('<br>');
-       endwhile;
+                ?>
+                <li><?php the_title();
+                    echo "  ";
+                    echo(get_post_custom_values('status')[0]);
+                    echo "  ";
+                    echo(get_post_custom_values('eventdate')[0]);
+                    ?></li>
+                <?php
+                // echo esc_attr($loop->post->post_title);
+                echo('<br>');
+            endwhile;
 
             wp_reset_postdata();
 
@@ -355,15 +346,17 @@ class event_widget extends WP_Widget
     public function form($instance)//внешний вид для заполнения виджета в админке!
     {
 
-        if (isset($instance['numberofevents']))
-        {$numberofevents = $instance['numberofevents'];};
-       // else
-         //   $numberofevents = 0;//число событий для отображения в виджете!
+        if (isset($instance['numberofevents'])) {
+            $numberofevents = $instance['numberofevents'];
+        };
+        // else
+        //   $numberofevents = 0;//число событий для отображения в виджете!
 
-        if (isset($instance['typeofevents']))
-        {  $typeofevents = $instance['typeofevents'];};
+        if (isset($instance['typeofevents'])) {
+            $typeofevents = $instance['typeofevents'];
+        };
         //else
-          //  $typeofevents = 'open';//статус отображаемых событий в виджете! [ open / closed ]
+        //  $typeofevents = 'open';//статус отображаемых событий в виджете! [ open / closed ]
         ?>
 
         <p>
@@ -415,25 +408,22 @@ function event_register_widget()
 add_action('widgets_init', 'event_register_widget');
 
 
+add_shortcode('events', 'event_shortcode');
 
+function event_shortcode($atts)
+{
 
-
-add_shortcode( 'events', 'event_shortcode' );
-
-function event_shortcode( $atts ){
-
-    $atts = shortcode_atts( [
-        'numbers' => '0', 'status'  => 'open',
-    ], $atts );
-
+    $atts = shortcode_atts([
+        'numbers' => '0', 'status' => 'open',
+    ], $atts);
 
 
     $dateNow = date_create('now');
     $dateNow = date_format($dateNow, "Y-m-d");
-$num = $atts['numbers'];
-$st = $atts["status"];
+    $num = $atts['numbers'];
+    $st = $atts["status"];
 
-    $args2 =   array(
+    $args2 = array(
         'post_type' => 'events',
         'posts_per_page' => $num,
 
@@ -444,7 +434,7 @@ $st = $atts["status"];
                 'key' => 'status',
                 'value' => $st,//ищу  события по статусу
             ),
-            'eventdate_clause'=>   array(
+            'eventdate_clause' => array(
                 'key' => 'eventdate',
                 'value' => $dateNow,
                 'compare' => '>=',
@@ -452,24 +442,20 @@ $st = $atts["status"];
             ),
         ),
 
-       // 'orderby' => 'eventdate_clause',
-
-
         'orderby' => array(
             'eventdate_clause' => 'ASC',
         ),
-
     );
 
-    $loop = new WP_Query( $args2 );
-   $numberOfPosts =  $loop->post_count;
-    $heightByPosts = (50+$numberOfPosts*50).'px';//для высоты прамки!
+    $loop = new WP_Query($args2);
+    $numberOfPosts = $loop->post_count;
+    $heightByPosts = (50 + $numberOfPosts * 50) . 'px';//для высоты прамки!
 
 
-$htmlLoopOutput = ""; //тут html для
-    while ( $loop->have_posts() ) : $loop->the_post();
-       $t =  the_title('','',false);
-       $d = (get_post_custom_values('eventdate')[0]);
+    $htmlLoopOutput = ""; //тут html для
+    while ($loop->have_posts()) : $loop->the_post();
+        $t = the_title('', '', false);
+        $d = (get_post_custom_values('eventdate')[0]);
         $htmlLoopOutput .= "<li> $t $d</li> <br> ";
 
 
@@ -488,23 +474,12 @@ $htmlLoopOutput
  ";
 
 
+    wp_reset_postdata();
 
-
-
-
-
-
-
-        wp_reset_postdata();
-
-        echo $args['after_widget'];
-        ?>
+    echo $args['after_widget'];
+    ?>
     </div>
     <?php
-
-
-
-
 
 
 }
