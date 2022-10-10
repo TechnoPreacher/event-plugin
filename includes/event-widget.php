@@ -1,5 +1,7 @@
 <?php
 
+require_once 'Arguments_For_Loop.php';
+
 class event_widget extends WP_Widget
 {
     function __construct()
@@ -18,35 +20,13 @@ class event_widget extends WP_Widget
         <div style="width:100%;height:100%;border:5px solid yellow;"> <?php
             $numberofevents = $instance['numberofevents'];//считал значение числа событий, введённое в админке в виджет
             $typeofevents = $instance['typeofevents'];//ну и вид события оттуда же
-            echo(__('СОБЫТИЯ  ', 'event-plugin'));
-            echo("[$numberofevents штук $typeofevents типа]");
 
-            $dateNow = date_create('now');
-            $dateNow = date_format($dateNow, "Y-m-d");
+            _e('СОБЫТИЯ', 'event-plugin');
+            _e(' ','event-plugin');
+            _e("[$numberofevents штук $typeofevents типа]",'event-plugin');
 
-            $args2 = array(
-                'post_type' => 'events',
-                'posts_per_page' => $numberofevents,
-                'meta_key' => 'eventdate',
-                'meta_query' => array(
-                    array(
-                        'key' => 'status',
-                        'value' => $typeofevents,//ищу  события по статусу
-                    ),
 
-                    'eventdate_clause' => array(
-                        'key' => 'eventdate',
-                        'value' => $dateNow,
-                        'compare' => '>=',
-                        'type' => 'DATE',
-                    ),
-                ),
-                'orderby' => array(
-                    'eventdate_clause' => 'ASC',
-                ),
-            );
-
-            $loop = new WP_Query($args2);
+            $loop = new WP_Query( Arguments_For_Loop::arguments($numberofevents,$typeofevents));
 
             echo "<table style = \"  border-collapse: collapse;\" >";
 
@@ -68,28 +48,18 @@ class event_widget extends WP_Widget
             ?>
         </div>
         <?php
-
-        /*
-
-            register_sidebar( array(
-               'name' => __( 'Телефон в шапке', '' ),
-               'id' => 'top-area',
-               'description' => __( 'Шапка', '' ),
-               'before_widget' => '',
-               'after_widget' => '',
-               'before_title' => '<h3>',
-               'after_title' => '</h3>',
-           ) );
-        <div class="top_phone">
-        <?php dynamic_sidebar( 'top-area' );
-        </div>
-       */
     }
 
 
     public function form($instance)//внешний вид для заполнения виджета в админке!
     {
-        if (isset($instance['numberofevents'])) {
+
+
+        $numberofevents = (isset($instance['numberofevents'])) ? $instance['numberofevents'] : 1;
+        $typeofevents = (isset($instance['typeofevents'])) ? $instance['typeofevents'] : 'open';
+
+
+     /*   if (isset($instance['numberofevents'])) {
             $numberofevents = $instance['numberofevents'];
         } else
             $numberofevents = 1;//число событий для отображения в виджете на старте!
@@ -98,10 +68,11 @@ class event_widget extends WP_Widget
             $typeofevents = $instance['typeofevents'];
         } else
             $typeofevents = 'open';//статус отображаемых событий в виджете! [ open / closed ]
-        ?>
+      */  ?>
+
 
         <p>
-            <label for="<?php echo $this->get_field_id('numberofevents'); ?>"><?php _e('Number of events:'); ?></label>
+            <label for="<?php echo $this->get_field_id('numberofevents'); ?>"><?php _e('Number of events:','event-plugin'); ?></label>
             <input class="widefat" id="<?php echo $this->get_field_id('numberofevents'); ?>"
                    name="<?php echo $this->get_field_name('numberofevents'); ?>" type="text"
                    value="<?php echo esc_attr($numberofevents); ?>"/>
