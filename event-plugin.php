@@ -13,7 +13,7 @@
 
 
 //===ЦЕПЛЯЮ кастом филдс, таксономию, виджет, шорткод, и возможность удаления к событиям ядра===
-add_action( 'plugins_loaded', 'event_plugin_loaded' );//подключаем переводчик
+add_action('plugins_loaded', 'event_plugin_loaded');//подключаем переводчик
 add_action('add_meta_boxes', 'my_extra_fields', 1);//кастомные поля
 add_action('init', 'create_taxonomies');//таксономия
 add_action('init', 'create_custom_content_type');//инициализация кастомных контент тайпов
@@ -24,12 +24,12 @@ register_deactivation_hook(__FILE__, 'event_plugin_deactivate');//убираю �
 //===============================================================================================
 
 
-include_once  __DIR__ .'/includes/event-widget.php';// Include WP_widget child class
+include_once __DIR__ . '/includes/event-widget.php';// Include WP_widget child class
 
 function event_plugin_loaded()
 {
-    $text_domain_dir = __DIR__ ."/lang/";
-    load_plugin_textdomain( 'event-plugin', false, $text_domain_dir );
+    $text_domain_dir = dirname(plugin_basename(__FILE__)) . '/lang/';
+    load_plugin_textdomain('event-plugin', false, $text_domain_dir);
 }
 
 
@@ -44,17 +44,18 @@ function event_plugin_deactivate()
 function create_taxonomies()//таксономия
 {
     $labels = array(
-        'name' => 'Таксономия ивента',
-        'singular_name' => 'Type',
-        'search_items' => 'Search Types',
-        'all_items' => 'All Types',
-        'parent_item' => 'Родитель',
-        'parent_item_colon' => 'Parent Type:',
-        'edit_item' => 'Редактировать таксономию ;-)',
-        'update_item' => 'Обновить таксономию ;-)',
-        'add_new_item' => 'Добавить новую таксономию ;-)',
-        'new_item_name' => 'Новая таксономия ;-)',
-        'menu_name' => 'Таксономия ;-)',
+        'name' => __('Таксономия ивента', 'event-plugin'),
+        'singular_name' => __('Type', 'event-plugin'),
+        'search_items' => __('Search Types', 'event-plugin'),
+        'all_items' => __('All Types', 'event-plugin'),
+        'parent_item' => __('Родитель', 'event-plugin'),
+
+        'parent_item_colon' => __('Parent Type:', 'event-plugin'),
+        'edit_item' => __('Редактировать таксономию ;-)', 'event-plugin'),
+        'update_item' => __('Обновить таксономию ;-)', 'event-plugin'),
+        'add_new_item' => __('Добавить новую таксономию ;-)', 'event-plugin'),
+        'new_item_name' => __('Новая таксономия ;-)', 'event-plugin'),
+        'menu_name' => __('Таксономия :-)', 'event-plugin'),
     );
 
     $args = array(
@@ -71,9 +72,9 @@ function create_taxonomies()//таксономия
 function create_custom_content_type()
 {
     $labels = array(
-        'name' => __( 'Соб8ытия :-)', 'event-plugin'),
+        'name' => __('События :-)', 'event-plugin'),
         'singular_name' => 'События :-)',
-        'menu_name' => 'События :-)',
+        'menu_name' => __('События :-)', 'event-plugin'),
         'name_admin_bar' => 'Event',
         'add_new' => 'Добавить...',
         'add_new_item' => 'Добавление события :-)',
@@ -178,13 +179,15 @@ add_filter('manage_events_posts_columns', function ($columns) {//вывод зн
 add_action('manage_events_posts_custom_column', function ($column_name) {// Выводим контент (значение) для каждой из зарегистрированных колонок $column_name в списке событий в админке
     $custom_fields = get_post_custom();
     $my_custom_field = $custom_fields[$column_name];
-    $color='';//цвет
-    if ($my_custom_field[0] =='open')  {$color='green';} ;
-    if ($my_custom_field[0] =='closed')    {$color='red';};
+    $color = '';//цвет
+    if ($my_custom_field[0] == 'open') {
+        $color = 'green';
+    };
+    if ($my_custom_field[0] == 'closed') {
+        $color = 'red';
+    };
     echo("  <p style=\"color:$color;\"> $my_custom_field[0] </p>");
 });
-
-
 
 
 function event_register_widget()
