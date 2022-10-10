@@ -2,7 +2,9 @@
 /*
  * Plugin Name: Событийный плагин :-)
  * Description:  Позволяет создавать виджет с предстоящими событиями; события могут содержать таксономии; имеется шорткод
- * Version: 1.0
+ * Version: 1.1
+ * Text Domain: event-plugin
+ * Domain Path: /lang/
  * Author: TechnoPreacher
  * License: GPLv2 or later
  * Requires at least: 5.0
@@ -11,16 +13,27 @@
 
 
 //===ЦЕПЛЯЮ кастом филдс, таксономию, виджет, шорткод, и возможность удаления к событиям ядра===
+add_action('plugins_loaded', 'event_plugin_loaded');//подключаем переводчик
 add_action('add_meta_boxes', 'my_extra_fields', 1);//кастомные поля
 add_action('init', 'create_taxonomies');//таксономия
 add_action('init', 'create_custom_content_type');//инициализация кастомных контент тайпов
 add_action('save_post', 'my_extra_fields_update', 0); // включаем обновление полей при сохранении
 add_action('widgets_init', 'event_register_widget');//прикручиваю виджет
 add_shortcode('events', 'event_shortcode');//прикручиваю шорткод
-register_deactivation_hook(__FILE__, 'plugin_deactivate');//убираю всё что сделал плагин
+register_deactivation_hook(__FILE__, 'event_plugin_deactivate');//убираю всё что сделал плагин
 //===============================================================================================
 
-function plugin_deactivate()
+
+include_once __DIR__ . '/includes/event-widget.php';// Include WP_widget child class
+
+function event_plugin_loaded()
+{
+    $text_domain_dir = dirname(plugin_basename(__FILE__)) . '/lang/';
+    load_plugin_textdomain('event-plugin', false, $text_domain_dir);
+}
+
+
+function event_plugin_deactivate()
 {
     unregister_post_type('events');//тут удаляю контент тайп
     unregister_widget('event_widget');//убить виджет
@@ -31,17 +44,18 @@ function plugin_deactivate()
 function create_taxonomies()//таксономия
 {
     $labels = array(
-        'name' => 'Таксономия ивента',
-        'singular_name' => 'Type',
-        'search_items' => 'Search Types',
-        'all_items' => 'All Types',
-        'parent_item' => 'Родитель',
-        'parent_item_colon' => 'Parent Type:',
-        'edit_item' => 'Редактировать таксономию ;-)',
-        'update_item' => 'Обновить таксономию ;-)',
-        'add_new_item' => 'Добавить новую таксономию ;-)',
-        'new_item_name' => 'Новая таксономия ;-)',
-        'menu_name' => 'Таксономия ;-)',
+        'name' => __('Таксономия ивента', 'event-plugin'),
+        'singular_name' => __('Type', 'event-plugin'),
+        'search_items' => __('Search Types', 'event-plugin'),
+        'all_items' => __('All Types', 'event-plugin'),
+        'parent_item' => __('Родитель', 'event-plugin'),
+
+        'parent_item_colon' => __('Parent Type:', 'event-plugin'),
+        'edit_item' => __('Редактировать таксономию ;-)', 'event-plugin'),
+        'update_item' => __('Обновить таксономию ;-)', 'event-plugin'),
+        'add_new_item' => __('Добавить новую таксономию ;-)', 'event-plugin'),
+        'new_item_name' => __('Новая таксономия ;-)', 'event-plugin'),
+        'menu_name' => __('Таксономия :-)', 'event-plugin'),
     );
 
     $args = array(
@@ -58,9 +72,9 @@ function create_taxonomies()//таксономия
 function create_custom_content_type()
 {
     $labels = array(
-        'name' => 'События :-)',
+        'name' => __('События :-)', 'event-plugin'),
         'singular_name' => 'События :-)',
-        'menu_name' => 'События :-)',
+        'menu_name' => __('События :-)', 'event-plugin'),
         'name_admin_bar' => 'Event',
         'add_new' => 'Добавить...',
         'add_new_item' => 'Добавление события :-)',
@@ -93,6 +107,7 @@ function create_custom_content_type()
         'query_var' => true
     );
     register_post_type('events', $args);//регистрирую кастомный контент тайп
+
     flush_rewrite_rules();//!!! Сбрасываем настройки ЧПУ, чтобы они пересоздались с новыми данными
 }
 
@@ -164,143 +179,16 @@ add_filter('manage_events_posts_columns', function ($columns) {//вывод зн
 add_action('manage_events_posts_custom_column', function ($column_name) {// Выводим контент (значение) для каждой из зарегистрированных колонок $column_name в списке событий в админке
     $custom_fields = get_post_custom();
     $my_custom_field = $custom_fields[$column_name];
-    $color='';//цвет
-    if ($my_custom_field[0] =='open')  {$color='green';} ;
-    if ($my_custom_field[0] =='closed')    {$color='red';};
+    $color = '';//цвет
+    if ($my_custom_field[0] == 'open') {
+        $color = 'green';
+    };
+    if ($my_custom_field[0] == 'closed') {
+        $color = 'red';
+    };
     echo("  <p style=\"color:$color;\"> $my_custom_field[0] </p>");
 });
 
-
-class event_widget extends WP_Widget
-{
-    function __construct()
-    {
-        parent::__construct(
-            'event_widget',// widget ID
-            __('Визжит событий :-)', ' event_widget_domain'),// widget name
-            array('description' => __('Виджет событий для WordPress', 'event_widget_domain'),)// widget description
-        );
-    }
-
-    public function widget($args, $instance)//внешний вид для вывода на фронт!
-    {
-        ?>
-
-        <div style="width:100%;height:100%;border:5px solid yellow;"> <?php
-            $numberofevents = $instance['numberofevents'];//считал значение числа событий, введённое в админке в виджет
-            $typeofevents = $instance['typeofevents'];//ну и вид события оттуда же
-            echo("СОБЫТИЯ  ");
-            echo("[$numberofevents штук $typeofevents типа]");
-
-            $dateNow = date_create('now');
-            $dateNow = date_format($dateNow, "Y-m-d");
-
-            $args2 = array(
-                'post_type' => 'events',
-                'posts_per_page' => $numberofevents,
-                'meta_key' => 'eventdate',
-                'meta_query' => array(
-                    array(
-                        'key' => 'status',
-                        'value' => $typeofevents,//ищу  события по статусу
-                    ),
-
-                    'eventdate_clause' => array(
-                        'key' => 'eventdate',
-                        'value' => $dateNow,
-                        'compare' => '>=',
-                        'type' => 'DATE',
-                    ),
-                ),
-                'orderby' => array(
-                    'eventdate_clause' => 'ASC',
-                ),
-            );
-
-            $loop = new WP_Query($args2);
-
-            echo "<table style = \"  border-collapse: collapse;\" >";
-
-            while ($loop->have_posts()) : $loop->the_post(); ?>
-                <tr>
-                    <td style=" border: 1px solid black">
-                        <?php the_title(); ?>
-                    </td>
-                    <td style=" border: 1px solid black">
-                        <?php echo(get_post_custom_values('eventdate')[0]); ?>
-                    </td>
-                </tr>
-
-            <?php
-            endwhile;
-            echo "</table>";
-            wp_reset_postdata();
-            echo $args['after_widget'];
-            ?>
-        </div>
-        <?php
-
-        /*
-
-            register_sidebar( array(
-               'name' => __( 'Телефон в шапке', '' ),
-               'id' => 'top-area',
-               'description' => __( 'Шапка', '' ),
-               'before_widget' => '',
-               'after_widget' => '',
-               'before_title' => '<h3>',
-               'after_title' => '</h3>',
-           ) );
-        <div class="top_phone">
-        <?php dynamic_sidebar( 'top-area' );
-        </div>
-       */
-    }
-
-
-    public function form($instance)//внешний вид для заполнения виджета в админке!
-    {
-        if (isset($instance['numberofevents'])) {
-            $numberofevents = $instance['numberofevents'];
-        } else
-            $numberofevents = 1;//число событий для отображения в виджете на старте!
-
-        if (isset($instance['typeofevents'])) {
-            $typeofevents = $instance['typeofevents'];
-        } else
-            $typeofevents = 'open';//статус отображаемых событий в виджете! [ open / closed ]
-        ?>
-
-        <p>
-            <label for="<?php echo $this->get_field_id('numberofevents'); ?>"><?php _e('Number of events:'); ?></label>
-            <input class="widefat" id="<?php echo $this->get_field_id('numberofevents'); ?>"
-                   name="<?php echo $this->get_field_name('numberofevents'); ?>" type="text"
-                   value="<?php echo esc_attr($numberofevents); ?>"/>
-        </p>
-
-        <p>Статус для событий в виджете: <?php
-            $v = $this->get_field_name('typeofevents');
-            ?>
-
-            <label><input type="radio" name="<?php echo $v; ?>"
-                          value="open" <?php checked($typeofevents, 'open'); ?> /> open</label>
-
-            <label><input type="radio" name="<?php echo $v; ?>"
-                          value="closed" <?php checked($typeofevents, 'closed'); ?> /> closed</label>
-        </p>
-
-        <?php
-    }
-
-
-    public function update($new_instance, $old_instance)
-    {
-        $instance = $old_instance;
-        $instance['typeofevents'] = (!empty($new_instance['typeofevents'])) ? strip_tags($new_instance['typeofevents']) : '';
-        $instance['numberofevents'] = (!empty($new_instance['numberofevents'])) ? strip_tags($new_instance['numberofevents']) : '';
-        return $instance;
-    }
-}
 
 function event_register_widget()
 {
