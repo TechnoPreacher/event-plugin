@@ -25,6 +25,7 @@ register_deactivation_hook(__FILE__, 'event_plugin_deactivate');//убираю �
 
 
 include_once __DIR__ . '/includes/event-widget.php';// Include WP_widget child class
+require_once __DIR__ . '/includes/Arguments_For_Loop.php';
 
 function event_plugin_loaded()
 {
@@ -73,19 +74,19 @@ function create_custom_content_type()
 {
     $labels = array(
         'name' => __('События :-)', 'event-plugin'),
-        'singular_name' => 'События :-)',
+        'singular_name' => __('События :-)', 'event-plugin'),
         'menu_name' => __('События :-)', 'event-plugin'),
-        'name_admin_bar' => 'Event',
-        'add_new' => 'Добавить...',
-        'add_new_item' => 'Добавление события :-)',
-        'new_item' => 'Новое событие :-)',
-        'edit_item' => 'Редактировать  :-)',
-        'view_item' => 'View Event',
-        'all_items' => 'Все',
-        'search_items' => 'Search Events',
-        'parent_item_colon' => 'Parent Events',
-        'not_found' => 'Пока что событий нет :-(',
-        'not_found_in_trash' => 'Корзина пуста!'
+        'name_admin_bar' => __('Event', 'event-plugin'),
+        'add_new' => __('Добавить...', 'event-plugin'),
+        'add_new_item' => __('Добавление события :-)', 'event-plugin'),
+        'new_item' => __('Новое событие :-)', 'event-plugin'),
+        'edit_item' => __('Редактировать  :-)', 'event-plugin'),
+        'view_item' => __('View Event', 'event-plugin'),
+        'all_items' => __('Все', 'event-plugin'),
+        'search_items' => __('Search Events', 'event-plugin'),
+        'parent_item_colon' => __('Parent Events', 'event-plugin'),
+        'not_found' => __('Пока что событий нет :-(', 'event-plugin'),
+        'not_found_in_trash' => __('Корзина пуста!', 'event-plugin'),
     );
 
     $args = array(
@@ -114,7 +115,7 @@ function create_custom_content_type()
 // подключаем функцию активации мета блока (my_extra_fields) - нужно для вывода кастомных полей на странице "добавить" в админке!
 function my_extra_fields()
 {
-    add_meta_box('extra_fields', 'Поля ивента', 'extra_fields_box_func', 'events', 'normal', 'high');
+    add_meta_box('extra_fields', __('Поля ивента', 'event-plugin'), 'extra_fields_box_func', 'events', 'normal', 'high');
 }
 
 function extra_fields_box_func($post)// код блока (внешний вид на странице добавления события в админке)
@@ -122,7 +123,7 @@ function extra_fields_box_func($post)// код блока (внешний вид
     ?>
     <div style="width:100%;height:100%;border:5px solid orangered;">
 
-        <p>Статус ивента: <?php $mark_v = get_post_meta($post->ID, 'status', 1); ?>
+        <p> <?php  _e('Статус ивента: ', 'event-plugin'); $mark_v = get_post_meta($post->ID, 'status', 1); ?>
             <label>
                 <input type="radio" name="extra[status]"
                        value="open" <?php checked($mark_v, 'open'); ?> /> open
@@ -133,7 +134,7 @@ function extra_fields_box_func($post)// код блока (внешний вид
             </label>
         </p>
 
-        <p>Дата ивента: <?php $eventDate = get_post_meta($post->ID, 'eventdate', 1); ?>
+        <p> <?php _e('Дата ивента: ', 'event-plugin'); $eventDate = get_post_meta($post->ID, 'eventdate', 1); ?>
             <input type='date' name="extra[eventdate]"
                    value="<?= $eventDate ?>"/>
         </p>
@@ -168,8 +169,8 @@ function my_extra_fields_update($post_id)//Сохрание маета-данн�
 
 add_filter('manage_events_posts_columns', function ($columns) {//вывод значений мета-полей в общем списке в админке!
     $my_columns = [
-        'status' => 'Состояние события',
-        'eventdate' => 'Дата события',
+        'status' => __('Состояние события','event-plugin'),
+        'eventdate' => __('Дата события','event-plugin'),
     ];
     array_pop($columns);//удаляю дату создания записи о событии, для меня важнее метадата самого события!
     return $columns + $my_columns;
@@ -201,35 +202,15 @@ function event_shortcode($atts)
         'numbers' => '0', 'status' => 'open',
     ], $atts);
 
-    $dateNow = date_create('now');
-    $dateNow = date_format($dateNow, "Y-m-d");
+
     $num = $atts['numbers'];
     $st = $atts["status"];
 
-    $args2 = array(
-        'post_type' => 'events',
-        'posts_per_page' => $num,
-        'meta_key' => 'eventdate',
-        'meta_query' => array(
-            array(
-                'key' => 'status',
-                'value' => $st,//ищу  события по статусу
-            ),
+    $dateNow = date_create('now');
+    $dateNow = date_format($dateNow, "Y-m-d");
 
-            'eventdate_clause' => array(
-                'key' => 'eventdate',
-                'value' => $dateNow,
-                'compare' => '>=',
-                'type' => 'DATE',
-            ),
-        ),
 
-        'orderby' => array(
-            'eventdate_clause' => 'ASC',
-        ),
-    );
-
-    $loop = new WP_Query($args2);
+    $loop = new WP_Query(Arguments_For_Loop::arguments($num, $st));
 
     $htmlLoopOutput = ""; //тут html для
     while ($loop->have_posts()) : $loop->the_post();

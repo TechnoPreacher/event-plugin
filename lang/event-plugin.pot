@@ -31,3 +31,17 @@ msgstr ""
 
 msgid "Таксономия :-)"
 msgstr ""
+
+
+msgid "СОБЫТИЯ"
+msgstr ""
+
+
+msgid "Поля ивента"
+msgstr ""
+
+msgid "Состояние события"
+msgstr ""
+
+msgid "Дата события"
+msgstr ""
